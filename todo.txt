@@ -1,0 +1,23 @@
+Refactor
+    - Change usage of emojis on bench scrape embed
+    - squat racks scrape embed
+    - rebuild updated inventory loop logic (using scheduler)
+
+Add
+    - scrape dumbbells
+    - scrape bars
+    - scrape plates/bumpers
+    - scrape apparel
+    - ping channel on update
+    - start/stop tracking user commands (use canceljob)
+    - Split message on 2000 character limit
+    - create embed per item stock change
+    - scrape Rogue (may have anti-bot methods)
+
+Change
+    - bench embed color: red - 0xff0000
+    - racks embed color: blue - 0x0000ff
+    - dumbbells embed color: yellow - 0xffff00
+    - bars embed color: cyan - 0x00ffff
+    - apparel embed color: pink - 0xff00ff
+    - plates/bumpers embed color: purple - 0x7b00ff
