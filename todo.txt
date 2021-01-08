@@ -1,8 +1,8 @@
 Refactor
     - rebuild updated inventory loop logic (using scheduler)
+    - rebuild all scrape functions into one function, determining site off user choice from list
 
 Add
-    - scrape plates/bumpers
     - scrape apparel
     - ping channel on update
     - start/stop tracking user commands (use canceljob)
@@ -12,4 +12,3 @@ Add
 
 Change
     - apparel embed color: pink - 0xff00ff
-    - plates/bumpers embed color: purple - 0x7b00ff
