@@ -71,42 +71,52 @@ def scrape_rep():
   return message_to_send
 
 def scrape_benches():
-  """Scrape Rep's strength training page"""
+  """Scrapes Rep's benches page"""
 
-  message_to_send = ""
+  price = ""
+  in_stock_items = {}
+  out_of_stock_items = {}
   r = requests.get('https://www.repfitness.com/strength-equipment/strength-training')
   page_content = bs(r.content, features='html5lib')
 
   all_items = page_content.select('li.item.product.product-item')
 
   for item in all_items:
-    item_link = item.select('a.product-item-link')
-    message_to_send += ("> **" + item_link[0].string.strip() + ":** ")
-    prices = item.select('div.price-box.price-final_price')
+      item_link = item.select('a.product-item-link')
+      item_name = ("> **" + item_link[0].string.strip() + ":** ")
+      prices = item.select('div.price-box.price-final_price')
 
-    try:
-      price_from = prices[0].select('p.price-from span.price')
-      price_to = prices[0].select('p.price-to span.price')
       try:
-        message_to_send += (f"{price_from[0].string} - {price_to[0].string}\n")
-      except IndexError:
-
-        try:
-          minimal_price = prices[0].select('p.minimal-price span.price')
-          message_to_send += (minimal_price[0].string + "\n")
-        except IndexError:
-
+          price_from = prices[0].select('p.price-from span.price')
+          price_to = prices[0].select('p.price-to span.price')
           try:
-            normal_price = prices[0].select('span.normal-price span.price')
-            message_to_send += (normal_price[0].string + "\n")
+              price = (f"{price_from[0].string} - {price_to[0].string} ")
           except IndexError:
-            final_price = prices[0].select('span.price')
-            message_to_send += (final_price[0].string + "\n")
 
-    except:
-      message_to_send += ("No Price Listed\n")
+              try:
+                  minimal_price = prices[0].select('p.minimal-price span.price')
+                  price = (minimal_price[0].string + " ")
+              except IndexError:
 
-  return message_to_send
+                  try:
+                      normal_price = prices[0].select('span.normal-price span.price')
+                      price = (normal_price[0].string + " ")
+                  except IndexError:
+                      final_price = prices[0].select('span.price')
+                      price = (final_price[0].string + " ")
+
+      except:
+          price = ("No Price Listed")
+
+      add_to_cart = item.select('div.actions-primary')
+      in_stock = add_to_cart[0].select('span')
+
+      if in_stock[0].string == 'Out of Stock':
+          out_of_stock_items[item_name] = price
+      elif in_stock[0].string == 'Add to Cart':
+          in_stock_items[item_name] = price
+
+  return in_stock_items, out_of_stock_items
 
 def scrape_racks():
   """Scrape Rep's power-racks page"""
@@ -225,13 +235,25 @@ async def on_message(message):
     await message.channel.send(racks_scrape)
 
   if msg_content.startswith('$benches'):
+    message_to_send = ''
     now = datetime.now()
-    benches_scrape = scrape_benches()
+    in_stock, out_of_stock = scrape_benches()
     e = discord.Embed(title="Rep Benches", url="https://www.repfitness.com/strength-equipment/strength-training")
+    message_to_send += '\n**IN STOCK**\n'
+    for item, price in in_stock.items():
+      message_to_send += item
+      message_to_send += price
+      message_to_send += '\n'
 
-    await message.channel.send(embed=e)
-    await message.channel.send(f'**\nRep Benches:** Updated {now.strftime("%H:%m:%S")} UTC\n')
-    await message.channel.send(benches_scrape)
+    message_to_send += '\n**OUT OF STOCK**\n'
+    for item, price in out_of_stock.items():
+      message_to_send += item
+      message_to_send += price
+      message_to_send += '\n'
+
+    # await message.channel.send(embed=e)
+    await message.channel.send(f'**\nRep Benches:** Updated {now.strftime("%H:%m:%S")} UTC\n\n')
+    await message.channel.send(message_to_send)
 
 # Run run botty boi
 client.run(TOKEN)
