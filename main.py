@@ -249,7 +249,7 @@ async def on_message(message):
 
   if msg_content.startswith('$benches'):
     message_to_send = ''
-    now = datetime.now()
+    scrape_update_time = datetime.now()
     in_stock, out_of_stock, links = scrape_benches()
 
     message_to_send += ':white_check_mark: **IN STOCK**\n'
@@ -265,7 +265,7 @@ async def on_message(message):
     e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training", description=message_to_send, color=0x23cc50)
     e.set_author(name='FID/FLAT BENCHES + ADDONS', url='https://www.repfitness.com/strength-equipment/strength-training')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/6031cf661625f6f6abd8f87ef140b802/w/i/wide-pad.jpg')
-    e.set_footer(text=f'Updated {now.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+    e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
     await message.channel.send(embed=e)
 
 # Run run botty boi
