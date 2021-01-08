@@ -172,6 +172,56 @@ def scrape_racks():
 
   return in_stock_items, out_of_stock_items, links
 
+def scrape_dumbbells():
+  """Scrapes Rep's dumbbells page"""
+  
+  price = ''
+  in_stock_items = {}
+  out_of_stock_items = {}
+  links = []
+  r = requests.get('https://www.repfitness.com/conditioning/strength-equipment/dumbbells')
+  page_content = bs(r.content, features='html5lib')
+
+  all_items = page_content.select('li.item.product.product-item')
+
+  for item in all_items:
+      item_link = item.find('a', attrs={'class': 'product-item-link'})
+      item_name = ("**[" + item_link.string.strip() + f"]** ")
+      prices = item.select('div.price-box.price-final_price')
+      links.append(item_link['href'])
+
+      try:
+          price_from = prices[0].select('p.price-from span.price')
+          price_to = prices[0].select('p.price-to span.price')
+          try:
+              price = (f": {price_from[0].string} - {price_to[0].string} ")
+          except IndexError:
+
+              try:
+                  minimal_price = prices[0].select('p.minimal-price span.price')
+                  price = (": " + minimal_price[0].string + " ")
+              except IndexError:
+
+                  try:
+                      normal_price = prices[0].select('span.normal-price span.price')
+                      price = (": " + normal_price[0].string + " ")
+                  except IndexError:
+                      final_price = prices[0].select('span.price')
+                      price = (": " + final_price[0].string + " ")
+
+      except:
+          price = (": No price listed")
+
+      add_to_cart = item.select('div.actions-primary')
+      in_stock = add_to_cart[0].select('span')
+
+      if in_stock[0].string == 'Out of Stock':
+          out_of_stock_items[item_name] = price
+      elif in_stock[0].string == 'Add to Cart':
+          in_stock_items[item_name] = price
+
+  return in_stock_items, out_of_stock_items, links
+
 def get_quote():
   """Get random quote from ZenQuotes"""
   response = requests.get("https://zenquotes.io/api/random")
@@ -289,6 +339,27 @@ async def on_message(message):
     e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training", description=message_to_send, color=0xff0000)
     e.set_author(name='FID/FLAT BENCHES + ADDONS', url='https://www.repfitness.com/strength-equipment/strength-training')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/6031cf661625f6f6abd8f87ef140b802/w/i/wide-pad.jpg')
+    e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+    await message.channel.send(embed=e)
+
+  if msg_content.startswith('$bells'):
+    message_to_send = ''
+    scrape_update_time = datetime.now()
+    in_stock, out_of_stock, links = scrape_dumbbells()
+
+    message_to_send += ':white_check_mark: **IN STOCK**\n'
+    i=0
+    for item, price in in_stock.items():
+      message_to_send += f' ✓ {item} {price} \n{links[i]}\n'
+      i+=1
+
+    message_to_send += '\n\n:x:** OUT OF STOCK **\n'
+    for item, price in out_of_stock.items():
+      message_to_send += f' × {item}\n'
+    
+    e = discord.Embed(url="https://www.repfitness.com/conditioning/strength-equipment/dumbbells", description=message_to_send, color=0xffff00)
+    e.set_author(name='HEX/ADJUTABLE DUMBBELLS + RACKS', url='https://www.repfitness.com/conditioning/strength-equipment/dumbbells')
+    e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/t/h/thumbnail-60_1.jpg')
     e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
     await message.channel.send(embed=e)
 
