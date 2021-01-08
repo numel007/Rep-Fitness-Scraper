@@ -386,7 +386,7 @@ async def on_message(message):
     for item, price in out_of_stock.items():
       message_to_send += f' × {item}\n'
     
-    e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training", description=message_to_send, color=0xff0000)
+    e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training", description=message_to_send, color=0x00ff0d)
     e.set_author(name='FID/FLAT BENCHES + ADDONS', url='https://www.repfitness.com/strength-equipment/strength-training')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/6031cf661625f6f6abd8f87ef140b802/w/i/wide-pad.jpg')
     e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
