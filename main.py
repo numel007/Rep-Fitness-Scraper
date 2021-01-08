@@ -86,7 +86,7 @@ def scrape_benches():
 
   for item in all_items:
       item_link = item.find('a', attrs={'class': 'product-item-link'})
-      item_name = ("**[" + item_link.string.strip() + f"]:** ")
+      item_name = ("**[" + item_link.string.strip() + f"]** ")
       prices = item.select('div.price-box.price-final_price')
       links.append(item_link['href'])
 
@@ -94,23 +94,23 @@ def scrape_benches():
           price_from = prices[0].select('p.price-from span.price')
           price_to = prices[0].select('p.price-to span.price')
           try:
-              price = (f"{price_from[0].string} - {price_to[0].string} ")
+              price = (f": {price_from[0].string} - {price_to[0].string} ")
           except IndexError:
 
               try:
                   minimal_price = prices[0].select('p.minimal-price span.price')
-                  price = (minimal_price[0].string + " ")
+                  price = (": " + minimal_price[0].string + " ")
               except IndexError:
 
                   try:
                       normal_price = prices[0].select('span.normal-price span.price')
-                      price = (normal_price[0].string + " ")
+                      price = (": " + normal_price[0].string + " ")
                   except IndexError:
                       final_price = prices[0].select('span.price')
-                      price = (final_price[0].string + " ")
+                      price = (": " + final_price[0].string + " ")
 
       except:
-          price = ("No price listed")
+          price = (": No price listed")
 
       add_to_cart = item.select('div.actions-primary')
       in_stock = add_to_cart[0].select('span')
@@ -252,18 +252,18 @@ async def on_message(message):
     now = datetime.now()
     in_stock, out_of_stock, links = scrape_benches()
 
-    message_to_send += '**IN STOCK**\n'
+    message_to_send += ':white_check_mark: **IN STOCK**\n'
     i=0
     for item, price in in_stock.items():
-      message_to_send += f':white_check_mark: {item} {price} \n{links[i]}\n'
+      message_to_send += f' ✓ {item} {price} \n{links[i]}\n'
       i+=1
 
-    message_to_send += '\n\n**OUT OF STOCK**\n'
+    message_to_send += '\n\n:x:** OUT OF STOCK **\n'
     for item, price in out_of_stock.items():
-      message_to_send += f':x: {item} {price} \n{links[i]}\n'
+      message_to_send += f' × {item}\n'
     
     e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training", description=message_to_send, color=0x23cc50)
-    e.set_author(name='BENCHES', url='https://www.repfitness.com/strength-equipment/strength-training')
+    e.set_author(name='FID/FLAT BENCHES + ADDONS', url='https://www.repfitness.com/strength-equipment/strength-training')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/6031cf661625f6f6abd8f87ef140b802/w/i/wide-pad.jpg')
     e.set_footer(text=f'Updated {now.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
     await message.channel.send(embed=e)
