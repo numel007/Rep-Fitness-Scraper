@@ -2,7 +2,6 @@ Refactor
     - rebuild updated inventory loop logic (using scheduler)
 
 Add
-    - scrape dumbbells
     - scrape bars
     - scrape plates/bumpers
     - scrape apparel
@@ -13,7 +12,6 @@ Add
     - scrape Rogue (may have anti-bot methods)
 
 Change
-    - dumbbells embed color: yellow - 0xffff00
     - bars embed color: cyan - 0x00ffff
     - apparel embed color: pink - 0xff00ff
     - plates/bumpers embed color: purple - 0x7b00ff
