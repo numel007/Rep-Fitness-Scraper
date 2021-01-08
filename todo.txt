@@ -3,7 +3,6 @@ Refactor
     - rebuild all scrape functions into one function, determining site off user choice from list
 
 Add
-    - scrape apparel
     - ping channel on update
     - start/stop tracking user commands (use canceljob)
     - Split message on 2000 character limit
@@ -11,4 +10,3 @@ Add
     - scrape Rogue (may have anti-bot methods)
 
 Change
-    - apparel embed color: pink - 0xff00ff
