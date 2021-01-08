@@ -70,6 +70,44 @@ def scrape_rep():
   # After all items have been parsed, return message
   return message_to_send
 
+def scrape_benches():
+  """Scrape Rep's strength training page"""
+
+  message_to_send = ""
+  r = requests.get('https://www.repfitness.com/strength-equipment/strength-training')
+  page_content = bs(r.content, features='html5lib')
+
+  all_items = page_content.select('li.item.product.product-item')
+
+  for item in all_items:
+    item_link = item.select('a.product-item-link')
+    message_to_send += ("> **" + item_link[0].string.strip() + ":** ")
+    prices = item.select('div.price-box.price-final_price')
+
+    try:
+      price_from = prices[0].select('p.price-from span.price')
+      price_to = prices[0].select('p.price-to span.price')
+      try:
+        message_to_send += (f"{price_from[0].string} - {price_to[0].string}\n")
+      except IndexError:
+
+        try:
+          minimal_price = prices[0].select('p.minimal-price span.price')
+          message_to_send += (minimal_price[0].string + "\n")
+        except IndexError:
+
+          try:
+            normal_price = prices[0].select('span.normal-price span.price')
+            message_to_send += (normal_price[0].string + "\n")
+          except IndexError:
+            final_price = prices[0].select('span.price')
+            message_to_send += (final_price[0].string + "\n")
+
+    except:
+      message_to_send += ("No Price Listed\n")
+
+  return message_to_send
+
 def scrape_racks():
   """Scrape Rep's power-racks page"""
 
@@ -185,6 +223,15 @@ async def on_message(message):
     await message.channel.send(embed=e)
     await message.channel.send(f'**\nRep Power Racks:** Updated {now.strftime("%H:%m:%S")} UTC\n')
     await message.channel.send(racks_scrape)
+
+  if msg_content.startswith('$benches'):
+    now = datetime.now()
+    benches_scrape = scrape_benches()
+    e = discord.Embed(title="Rep Benches", url="https://www.repfitness.com/strength-equipment/strength-training")
+
+    await message.channel.send(embed=e)
+    await message.channel.send(f'**\nRep Benches:** Updated {now.strftime("%H:%m:%S")} UTC\n')
+    await message.channel.send(benches_scrape)
 
 # Run run botty boi
 client.run(TOKEN)
