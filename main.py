@@ -1,37 +1,143 @@
+import discord
+import os
 import requests
+import json
+import random
 import re
 from bs4 import BeautifulSoup as bs
 import html5lib
-import pprint
+from datetime import datetime
+import time
+from dotenv import load_dotenv
 
-# Load the webpage content
-r = requests.get("https://www.repfitness.com/in-stock-items?product_list_limit=12")
+client = discord.Client()
+load_dotenv()
+TOKEN = os.getenv('TOKEN')
 
-# Convert to a beautiful soup object
-page_content = bs(r.content, features="html5lib")
+sad_words = ['$sad', '$mad', '$bad']
+encouragements = ["Just like... don't be sad lol", "lolwut sadboi"]
 
-all_items = page_content.select('li.item.product.product-item')
+def scrape_rep():
+  """Scrape Rep's in-stock page, return scraped data"""
 
-for item in all_items:
-  item_link = item.select('a.product-item-link')
-  print(item_link[0].string.strip())
+  # Initialize empty variable to store message
+  message_to_send = ""
 
-  prices = item.select('div.price-box.price-final_price')
-  price_from = prices[0].select('p.price-from span.price')
-  price_to = prices[0].select('p.price-to span.price')
+  # Set webpage to be scraped
+  r = requests.get("https://www.repfitness.com/in-stock-items?product_list_limit=12")
 
-  try:
-    print(f"{price_from[0].string} - {price_to[0].string}\n")
-  except IndexError:
+  # Store scraped page
+  page_content = bs(r.content, features="html5lib")
 
+  # Parse item listings from scraped data
+  all_items = page_content.select('li.item.product.product-item')
+  
+  for item in all_items:
+
+    # Parse <a> from all_items
+    item_link = item.select('a.product-item-link')
+
+    # Parse item name from <a> tag, append to message_to_send
+    message_to_send += ("> **" + item_link[0].string.strip() + ":** ")
+
+    # Parse price container corresponding to currently selected item
+    prices = item.select('div.price-box.price-final_price')
+
+    # Rep doesn't know how to build a coherent website; these try/excepts detect which
+    # price container the site is using for the item
     try:
-      minimal_price = prices[0].select('p.minimal-price span.price')
-      print(minimal_price[0].string + "\n")
-    except IndexError:
-
+      price_from = prices[0].select('p.price-from span.price')
+      price_to = prices[0].select('p.price-to span.price')
       try:
-        normal_price = prices[0].select('span.normal-price span.price')
-        print(normal_price[0].string + "\n")
+        message_to_send += (f"{price_from[0].string} - {price_to[0].string}\n")
       except IndexError:
-        final_price = prices[0].select('span.price')
-        print(final_price[0].string + "\n")
+
+        try:
+          minimal_price = prices[0].select('p.minimal-price span.price')
+          message_to_send += (minimal_price[0].string + "\n")
+        except IndexError:
+
+          try:
+            normal_price = prices[0].select('span.normal-price span.price')
+            message_to_send += (normal_price[0].string + "\n")
+          except IndexError:
+            final_price = prices[0].select('span.price')
+            message_to_send += (final_price[0].string + "\n")
+
+    except:
+      message_to_send += ("Out of stock (Rep listed as in-stock 🤔)\n")
+  
+  # After all items have been parsed, return message
+  return message_to_send
+
+def get_quote():
+  """Get random quote from ZenQuotes"""
+  response = requests.get("https://zenquotes.io/api/random")
+  json_data = json.loads(response.text)
+  quote = json_data[0]['q'] + " -" + json_data[0]['a']
+  return quote
+
+@client.event
+async def on_ready():
+  print('{0.user} now running'.format(client))
+
+@client.event
+async def on_message(message):
+
+  # Parse discord message's content
+  msg_content = message.content
+
+  # Stops the bot from talking to itself
+  if message.author == client.user:
+    return
+
+  # Testing pinging a user
+  if msg_content.startswith('$whoami'):
+    await message.channel.send('You are {}.'.format(message.author.mention))
+
+  # Testing api calls
+  if msg_content.startswith('$inspire'):
+    quote = get_quote()
+    await message.channel.send(quote)
+
+  if any(word in msg_content for word in sad_words):
+    await message.channel.send(random.choice(encouragements))
+
+  # Calls scrape_rep() and runs forever
+  if msg_content.startswith('$rep'):
+    # Set time, store scrape, set embed link
+    now = datetime.now()
+    old_scrape = scrape_rep()
+    e = discord.Embed(title="Click For In-Stock Items", url="https://www.repfitness.com/in-stock-items?product_list_limit=12")
+
+    # Send embed link, current time, and first scrape
+    await message.channel.send(embed=e)
+    await message.channel.send(f'**\nIn Stock Items:** Updated {now.strftime("%H:%M:%S")} UTC\n\n')
+    await message.channel.send(old_scrape)
+
+    # Loops and checks for changes in old vs new scrape
+    while True:
+
+      # Store second scrape
+      new_scrape = scrape_rep()
+
+
+      if old_scrape == new_scrape:
+
+        # If scrapes are the same then sleep 60 seconds and repeat
+        time.sleep(60)
+        continue
+      else:
+
+        # If scrapes are different then send new scrape, sleep 60 seconds, and repeat
+        await message.channel.send(embed=e)
+        await message.channel.send(f'**\nNew Items In Stock!:** Updated {now.strftime("%H:%M:%S")} UTC\n\n')
+        await message.channel.send(new_scrape)
+
+        # Reset old_scrape with new data
+        old_scrape = new_scrape
+        time.sleep(60)
+        continue
+
+# Run run botty boi
+client.run(TOKEN)
