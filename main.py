@@ -255,19 +255,12 @@ async def on_message(message):
     message_to_send += '**IN STOCK**\n'
     i=0
     for item, price in in_stock.items():
-      message_to_send += f':white_check_mark:'
-      message_to_send += item
-      message_to_send += price
-      message_to_send += f'\n{links[i]}'
-      message_to_send += '\n'
+      message_to_send += f':white_check_mark: {item} {price} \n{links[i]}\n'
       i+=1
 
     message_to_send += '\n\n**OUT OF STOCK**\n'
     for item, price in out_of_stock.items():
-      message_to_send += ':x:'
-      message_to_send += item
-      message_to_send += price
-      message_to_send += '\n'
+      message_to_send += f':x: {item} {price} \n{links[i]}\n'
     
     e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training", description=message_to_send, color=0x23cc50)
     e.set_author(name='BENCHES', url='https://www.repfitness.com/strength-equipment/strength-training')
