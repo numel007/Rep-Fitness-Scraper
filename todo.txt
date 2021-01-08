@@ -1,5 +1,4 @@
 Refactor
-    - squat racks scrape embed
     - rebuild updated inventory loop logic (using scheduler)
 
 Add
@@ -14,8 +13,6 @@ Add
     - scrape Rogue (may have anti-bot methods)
 
 Change
-    - bench embed color: red - 0xff0000
-    - racks embed color: blue - 0x0000ff
     - dumbbells embed color: yellow - 0xffff00
     - bars embed color: cyan - 0x00ffff
     - apparel embed color: pink - 0xff00ff
