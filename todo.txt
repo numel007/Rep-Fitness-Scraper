@@ -1,5 +1,4 @@
 Refactor
-    - Change usage of emojis on bench scrape embed
     - squat racks scrape embed
     - rebuild updated inventory loop logic (using scheduler)
 
