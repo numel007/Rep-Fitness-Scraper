@@ -169,23 +169,27 @@ def get_quote():
   quote = json_data[0]['q'] + " -" + json_data[0]['a']
   return quote
 
-def create_embed(in_stock, out_of_stock, links):
+def create_message(in_stock, out_of_stock, links):
+  """Builds message from scraped data"""
 
-  scrape_update_time = datetime.now()
-  e = discord.Embed()
-  e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
   message = ':white_check_mark: **IN STOCK**\n\n'
   
+  # Index indicator, used to iterate through links list
   i = 0
+
+  # Concatenate items/prices/links for in stock items to message
   for item, price in in_stock.items():
     message += f' ✓ {item} {price} \n{links[i]}\n'
     i+=1
 
   message += '\n\n:x:** OUT OF STOCK **\n\n'
+
+  # Concatenate only item (no price/links) for OOS items to message
+  # This is to try to stay below Discord's 2000 char limit
   for item, price in out_of_stock.items():
     message += f' × {item}\n'
 
-  return e, message
+  return message
 
 @client.event
 async def on_ready():
@@ -259,93 +263,64 @@ async def on_message(message):
         continue
 
   if msg_content.startswith('$racks'):
+
+    # Get current time to be used as posted scrape time
+    scrape_update_time = datetime.now()
+
+    # Scrape category and store returned dictionaries and links
     in_stock, out_of_stock, links = scrape_category('racks')
-    e, description_content = create_embed(in_stock, out_of_stock, links)
+
+    # Pass dictionaries and links into message creation method, store returned message
+    description_content = create_message(in_stock, out_of_stock, links)
     
+    # Create embed
     e = discord.Embed(url="https://www.repfitness.com/strength-equipment/power-racks", description=description_content, color=0x0000ff)
     e.set_author(name='POWER/SQUAT RACKS + ADDONS', url='https://www.repfitness.com/strength-equipment/power-racks')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/r/e/rep_pr-5000_v2-loaded_3__13.jpg')
+    e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+
+    # Send embed
     await message.channel.send(embed=e)
 
   if msg_content.startswith('$benches'):
-    message_to_send = ''
     scrape_update_time = datetime.now()
-    in_stock, out_of_stock, links = scrape_benches()
+    in_stock, out_of_stock, links = scrape_category('benches')
+    description_content = create_message(in_stock, out_of_stock, links)
 
-    message_to_send += ':white_check_mark: **IN STOCK**\n'
-    i=0
-    for item, price in in_stock.items():
-      message_to_send += f' ✓ {item} {price} \n{links[i]}\n'
-      i+=1
-
-    message_to_send += '\n\n:x:** OUT OF STOCK **\n'
-    for item, price in out_of_stock.items():
-      message_to_send += f' × {item}\n'
-    
-    e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training", description=message_to_send, color=0x00ff0d)
+    e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training", description=description_content, color=0x00ff0d)
     e.set_author(name='FID/FLAT BENCHES + ADDONS', url='https://www.repfitness.com/strength-equipment/strength-training')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/6031cf661625f6f6abd8f87ef140b802/w/i/wide-pad.jpg')
     e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
     await message.channel.send(embed=e)
 
   if msg_content.startswith('$bells'):
-    message_to_send = ''
     scrape_update_time = datetime.now()
-    in_stock, out_of_stock, links = scrape_dumbbells()
+    in_stock, out_of_stock, links = scrape_category('bells')
+    description_content = create_message(in_stock, out_of_stock, links)
 
-    message_to_send += ':white_check_mark: **IN STOCK**\n'
-    i=0
-    for item, price in in_stock.items():
-      message_to_send += f' ✓ {item} {price} \n{links[i]}\n'
-      i+=1
-
-    message_to_send += '\n\n:x:** OUT OF STOCK **\n'
-    for item, price in out_of_stock.items():
-      message_to_send += f' × {item}\n'
-    
-    e = discord.Embed(url="https://www.repfitness.com/conditioning/strength-equipment/dumbbells", description=message_to_send, color=0xffff00)
+    e = discord.Embed(url="https://www.repfitness.com/conditioning/strength-equipment/dumbbells", description=description_content, color=0xffff00)
     e.set_author(name='HEX/ADJUTABLE DUMBBELLS + RACKS', url='https://www.repfitness.com/conditioning/strength-equipment/dumbbells')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/t/h/thumbnail-60_1.jpg')
     e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
     await message.channel.send(embed=e)
 
   if msg_content.startswith('$bars'):
-    message_to_send = ''
     scrape_update_time = datetime.now()
-    in_stock, out_of_stock, links = scrape_bars()
+    in_stock, out_of_stock, links = scrape_category('bars')
+    description_content = create_message(in_stock, out_of_stock, links)
 
-    message_to_send += ':white_check_mark: **IN STOCK**\n'
-    i=0
-    for item, price in in_stock.items():
-      message_to_send += f' ✓ {item} {price} \n{links[i]}\n'
-      i+=1
-
-    message_to_send += '\n\n:x:** OUT OF STOCK **\n'
-    for item, price in out_of_stock.items():
-      message_to_send += f' × {item}\n'
-    
-    e = discord.Embed(url="https://www.repfitness.com/bars-plates/olympic-bars", description=message_to_send, color=0x00ffff)
+    e = discord.Embed(url="https://www.repfitness.com/bars-plates/olympic-bars", description=description_content, color=0x00ffff)
     e.set_author(name='OLYMPIC/TECHNIQUE/EZ-CURL/TRAP/POWER BARS', url='https://www.repfitness.com/bars-plates/olympic-bars')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/tmp/category/Category_Headers-Barbells.jpg')
     e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
     await message.channel.send(embed=e)
 
   if msg_content.startswith('$plates'):
-    message_to_send = ''
     scrape_update_time = datetime.now()
-    in_stock, out_of_stock, links = scrape_plates()
-
-    message_to_send += ':white_check_mark: **IN STOCK**\n'
-    i=0
-    for item, price in in_stock.items():
-      message_to_send += f' ✓ {item} {price} \n{links[i]}\n'
-      i+=1
-
-    message_to_send += '\n\n:x:** OUT OF STOCK **\n'
-    for item, price in out_of_stock.items():
-      message_to_send += f' × {item}\n'
+    in_stock, out_of_stock, links = scrape_category('plates')
+    description_content = create_message(in_stock, out_of_stock, links)
     
-    e = discord.Embed(url="https://www.repfitness.com/bars-plates/olympic-plates", description=message_to_send, color=0x7b00ff)
+    e = discord.Embed(url="https://www.repfitness.com/bars-plates/olympic-plates", description=description_content, color=0x7b00ff)
     e.set_author(name='OLYMPIC/IRON/FRACTIONAL PLATES', url='https://www.repfitness.com/bars-plates/olympic-plates')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/l/i/lightroom_retouch-2.jpg')
     e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
