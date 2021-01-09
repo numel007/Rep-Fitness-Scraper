@@ -228,39 +228,7 @@ async def on_message(message):
 
   # Calls scrape_rep() and runs forever
   if msg_content.startswith('$rep'):
-    # Set time, store scrape, set embed link
-    now = datetime.now()
-    old_scrape = scrape_rep()
-    e = discord.Embed(title="Click For In-Stock Items", url="https://www.repfitness.com/in-stock-items?product_list_limit=12")
-
-    # Send embed link, current time, and first scrape
-    await message.channel.send(embed=e)
-    await message.channel.send(f'**\nIn Stock Items:** Updated {now.strftime("%H:%M:%S")} UTC\n\n')
-    await message.channel.send(old_scrape)
-
-    # Loops and checks for changes in old vs new scrape
-    while True:
-
-      # Store second scrape
-      new_scrape = scrape_rep()
-
-
-      if old_scrape == new_scrape:
-
-        # If scrapes are the same then sleep 60 seconds and repeat
-        time.sleep(60)
-        continue
-      else:
-
-        # If scrapes are different then send new scrape, sleep 60 seconds, and repeat
-        await message.channel.send(embed=e)
-        await message.channel.send(f'**\nNew Items In Stock!:** Updated {now.strftime("%H:%M:%S")} UTC\n\n')
-        await message.channel.send(new_scrape)
-
-        # Reset old_scrape with new data
-        old_scrape = new_scrape
-        time.sleep(60)
-        continue
+    await message.channel.send('Not working yet, try again later.')
 
   if msg_content.startswith('$racks'):
 
