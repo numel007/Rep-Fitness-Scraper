@@ -1,12 +1,10 @@
 Refactor
     - rebuild updated inventory loop logic (using scheduler)
-    - rebuild all scrape functions into one function, determining site off user choice from list
 
 Add
     - ping channel on update
     - start/stop tracking user commands (use canceljob)
     - Split message on 2000 character limit
     - create embed per item stock change
-    - scrape Rogue (may have anti-bot methods)
 
 Change
