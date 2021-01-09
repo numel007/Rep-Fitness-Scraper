@@ -9,15 +9,12 @@ import html5lib
 from datetime import datetime
 import time
 from dotenv import load_dotenv
-from discord.ext import commands
+import schedule
 
 
 client = discord.Client()
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
-
-sad_words = ['$sad', '$mad', '$bad']
-encouragements = ["Just like... don't be sad lol", "lolwut sadboi"]
 
 def scrape_rep():
 	"""Scrape Rep's in-stock page, return scraped data"""
@@ -113,13 +110,6 @@ def scrape_category(target):
 
   # Return in/out of stock dictionaries and links list
   return in_stock_items, out_of_stock_items, links
-  
-def get_quote():
-  """Get random quote from ZenQuotes"""
-  response = requests.get('https://zenquotes.io/api/random')
-  json_data = json.loads(response.text)
-  quote = json_data[0]['q'] + ' -' + json_data[0]['a']
-  return quote
 
 def create_message(in_stock, out_of_stock, links):
 	"""Builds message from scraped data"""
@@ -155,9 +145,6 @@ async def on_ready():
 @client.event
 async def on_message(message):
 
-	# Parse discord message's content
-	msg_content = message.content
-
   	# Stops the bot from talking to itself
 	if message.author == client.user:
 		return
@@ -167,22 +154,14 @@ async def on_message(message):
 		await message.channel.send(':eyes:')
 
   	# Testing pinging a user
-	if msg_content.startswith('$whoami'):
+	if message.content.startswith('$whoami'):
 		await message.channel.send('You are {}.'.format(message.author.mention))
 
-	# Testing api calls
-	if msg_content.startswith('$inspire'):
-		quote = get_quote()
-		await message.channel.send(quote)
-
-	if any(word in msg_content for word in sad_words):
-		await message.channel.send(random.choice(encouragements))
-
 	# Calls scrape_rep() and runs forever
-	if msg_content.startswith('$rep'):
+	if message.content.startswith('$rep'):
 		await message.channel.send('Not working yet, try again later.')
 
-	if msg_content.startswith('$racks'):
+	if message.content.startswith('$racks'):
 
 		# Get current time to be used as posted scrape time
 		scrape_update_time = datetime.now()
@@ -202,7 +181,7 @@ async def on_message(message):
 		# Send embed
 		await message.channel.send(embed=e)
 
-	if msg_content.startswith('$benches'):
+	if message.content.startswith('$benches'):
 		scrape_update_time = datetime.now()
 		in_stock, out_of_stock, links = scrape_category('benches')
 		description_content = create_message(in_stock, out_of_stock, links)
@@ -213,7 +192,7 @@ async def on_message(message):
 		e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
 		await message.channel.send(embed=e)
 
-	if msg_content.startswith('$bells'):
+	if message.content.startswith('$bells'):
 		scrape_update_time = datetime.now()
 		in_stock, out_of_stock, links = scrape_category('bells')
 		description_content = create_message(in_stock, out_of_stock, links)
@@ -224,7 +203,7 @@ async def on_message(message):
 		e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
 		await message.channel.send(embed=e)
 
-	if msg_content.startswith('$bars'):
+	if message.content.startswith('$bars'):
 		scrape_update_time = datetime.now()
 		in_stock, out_of_stock, links = scrape_category('bars')
 		description_content = create_message(in_stock, out_of_stock, links)
@@ -235,7 +214,7 @@ async def on_message(message):
 		e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
 		await message.channel.send(embed=e)
 
-	if msg_content.startswith('$plates'):
+	if message.content.startswith('$plates'):
 		scrape_update_time = datetime.now()
 		in_stock, out_of_stock, links = scrape_category('plates')
 		description_content = create_message(in_stock, out_of_stock, links)
