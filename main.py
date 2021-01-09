@@ -169,6 +169,24 @@ def get_quote():
   quote = json_data[0]['q'] + " -" + json_data[0]['a']
   return quote
 
+def create_embed(in_stock, out_of_stock, links):
+
+  scrape_update_time = datetime.now()
+  e = discord.Embed()
+  e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+  message = ':white_check_mark: **IN STOCK**\n\n'
+  
+  i = 0
+  for item, price in in_stock.items():
+    message += f' ✓ {item} {price} \n{links[i]}\n'
+    i+=1
+
+  message += '\n\n:x:** OUT OF STOCK **\n\n'
+  for item, price in out_of_stock.items():
+    message += f' × {item}\n'
+
+  return e, message
+
 @client.event
 async def on_ready():
   print('{0.user} now running'.format(client))
@@ -241,24 +259,12 @@ async def on_message(message):
         continue
 
   if msg_content.startswith('$racks'):
-    message_to_send = ''
-    scrape_update_time = datetime.now()
-    in_stock, out_of_stock, links = scrape_racks()
-
-    message_to_send += ':white_check_mark: **IN STOCK**\n'
-    i=0
-    for item, price in in_stock.items():
-      message_to_send += f' ✓ {item} {price} \n{links[i]}\n'
-      i+=1
-
-    message_to_send += '\n\n:x:** OUT OF STOCK **\n'
-    for item, price in out_of_stock.items():
-      message_to_send += f' × {item}\n'
+    in_stock, out_of_stock, links = scrape_category('racks')
+    e, description_content = create_embed(in_stock, out_of_stock, links)
     
-    e = discord.Embed(url="https://www.repfitness.com/strength-equipment/power-racks", description=message_to_send, color=0x0000ff)
+    e = discord.Embed(url="https://www.repfitness.com/strength-equipment/power-racks", description=description_content, color=0x0000ff)
     e.set_author(name='POWER/SQUAT RACKS + ADDONS', url='https://www.repfitness.com/strength-equipment/power-racks')
     e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/r/e/rep_pr-5000_v2-loaded_3__13.jpg')
-    e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
     await message.channel.send(embed=e)
 
   if msg_content.startswith('$benches'):
