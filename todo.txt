@@ -1,10 +1,13 @@
 Refactor
-    - rebuild updated inventory loop logic (using scheduler)
+    - rebuild updated inventory loop logic (use scheduler)
+    - deploy to Heroku
 
 Add
+    - update bot status on action
+    - show # of connected servers in status
     - ping channel on update
+    - readme.md
     - start/stop tracking user commands (use canceljob)
-    - Split message on 2000 character limit
     - create embed per item stock change
 
 Change
