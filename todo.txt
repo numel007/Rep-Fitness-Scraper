@@ -1,9 +1,7 @@
 Refactor
-    - rebuild updated inventory loop logic (use scheduler)
     - deploy to Heroku
 
 Add
-    - update bot status on action
     - show # of connected servers in status
     - ping channel on update
     - readme.md
