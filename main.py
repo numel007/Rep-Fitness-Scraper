@@ -135,12 +135,12 @@ def create_message(in_stock, out_of_stock, links):
 
 @client.event
 async def on_ready():
-  print('{0.user} now running'.format(client))
-  print('-------------------')
-  print('Connected Servers:')
-  for guild in client.guilds:
-	  print(guild.name)
-  print('-------------------')
+	print('{0.user} now running\n'.format(client))
+	print('Connected Servers:')
+	print('-------------------')
+	for guild in client.guilds:
+		print(guild.name)
+	print('\n')
 
 @client.event
 async def on_message(message):
