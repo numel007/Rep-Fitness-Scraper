@@ -1,0 +1,1 @@
+worker: python bot/scrape_on_command.py
