@@ -10,6 +10,8 @@ from datetime import datetime
 import time
 from dotenv import load_dotenv
 import schedule
+from multiprocessing import Process
+import sys
 
 
 client = discord.Client()
@@ -111,6 +113,30 @@ def scrape_category(target):
   # Return in/out of stock dictionaries and links list
   return in_stock_items, out_of_stock_items, links
 
+def scrape_all_categories():
+
+	#---------BENCHES---------
+	benches_in_stock, benches_out_of_stock, benches_links = scrape_category('benches')
+	benches_content = create_message(benches_in_stock, benches_out_of_stock, benches_links)
+
+	#---------BELLS---------
+	bells_in_stock, bells_out_of_stock, bells_links = scrape_category('bells')
+	bells_content = create_message(bells_in_stock, bells_out_of_stock, bells_links)
+
+	#---------BARS---------
+	bars_in_stock, bars_out_of_stock, bars_links = scrape_category('bars')
+	bars_content = create_message(bars_in_stock, bars_out_of_stock, bars_links)
+
+	#---------RACKS---------
+	racks_in_stock, racks_out_of_stock, racks_links = scrape_category('racks')
+	racks_content = create_message(racks_in_stock, racks_out_of_stock, racks_links)
+
+	#---------PLATES---------
+	plates_in_stock, plates_out_of_stock, plates_links = scrape_category('plates')
+	plates_content = create_message(plates_in_stock, plates_out_of_stock, plates_links)
+
+	return benches_content, bells_content, bars_content, racks_content, plates_content
+
 def create_message(in_stock, out_of_stock, links):
 	"""Builds message from scraped data"""
 
@@ -132,6 +158,42 @@ def create_message(in_stock, out_of_stock, links):
 		message += f' × {item}\n'
 
 	return message
+
+def scrape_every_n_seconds():
+	bench_1, bells_1, bars_1, racks_1, plates_1 = scrape_all_categories()
+	print('Sleeping 60 seconds...')
+	time.sleep(60)
+
+	bench_2, bells_2, bars_2, racks_2, plates_2 = scrape_all_categories()
+
+	changes_list = []
+
+	if bench_1 == bench_2:
+		changes_list.append(False)
+	else:
+		changes_list.append(True)
+
+	if bells_1 == bells_2:
+		changes_list.append(False)
+	else:
+		changes_list.append(True)
+
+	if bars_1 == bars_2:
+		changes_list.append(False)
+	else:
+		changes_list.append(True)
+
+	if racks_1 == racks_2:
+		changes_list.append(False)
+	else:
+		changes_list.append(True)
+
+	if plates_1 == plates_2:
+		changes_list.append(False)
+	else:
+		changes_list.append(True)
+	
+	return changes_list
 
 @client.event
 async def on_ready():
@@ -225,5 +287,79 @@ async def on_message(message):
 		e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
 		await message.channel.send(embed=e)
 
-# Run run botty boi
+	if message.content.startswith('$track-all'):
+		await message.channel.send('**NOW TRACKING ALL CATEGORIES**')
+		await message.channel.send("**WARNING: The dev is stupid and hasn't figured out how to kill this loop once it starts. Contact dev to restart.**")
+		while True:
+			changes_list = scrape_every_n_seconds()
+			print(changes_list)
+
+			i = 0
+			for change in changes_list:
+				if change == False:
+					pass
+				else:
+					
+					if i == 0:
+						scrape_update_time = datetime.now()
+						in_stock, out_of_stock, links = scrape_category('benches')
+						description_content = create_message(in_stock, out_of_stock, links)
+
+						e = discord.Embed(url='https://www.repfitness.com/strength-equipment/strength-training', description=description_content, color=0x00ff0d)
+						e.set_author(name='FID/FLAT BENCHES + ADDONS', url='https://www.repfitness.com/strength-equipment/strength-training')
+						e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/6031cf661625f6f6abd8f87ef140b802/w/i/wide-pad.jpg')
+						e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+						await message.channel.send(embed=e)
+						print('benches changed')
+
+					elif i == 1:
+						scrape_update_time = datetime.now()
+						in_stock, out_of_stock, links = scrape_category('bells')
+						description_content = create_message(in_stock, out_of_stock, links)
+
+						e = discord.Embed(url='https://www.repfitness.com/conditioning/strength-equipment/dumbbells', description=description_content, color=0xffff00)
+						e.set_author(name='HEX/ADJUTABLE DUMBBELLS + RACKS', url='https://www.repfitness.com/conditioning/strength-equipment/dumbbells')
+						e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/t/h/thumbnail-60_1.jpg')
+						e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+						await message.channel.send(embed=e)	
+						print('bells changed')
+
+					elif i == 2:
+						scrape_update_time = datetime.now()
+						in_stock, out_of_stock, links = scrape_category('bars')
+						description_content = create_message(in_stock, out_of_stock, links)
+
+						e = discord.Embed(url='https://www.repfitness.com/bars-plates/olympic-bars', description=description_content, color=0x00ffff)
+						e.set_author(name='OLYMPIC/TECHNIQUE/EZ-CURL/TRAP/POWER BARS', url='https://www.repfitness.com/bars-plates/olympic-bars')
+						e.set_thumbnail(url='https://www.repfitness.com/media/catalog/tmp/category/Category_Headers-Barbells.jpg')
+						e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+						await message.channel.send(embed=e)
+						print('bars changed')
+
+					elif i == 3:
+						scrape_update_time = datetime.now()
+						in_stock, out_of_stock, links = scrape_category('racks')
+						description_content = create_message(in_stock, out_of_stock, links)
+						
+						e = discord.Embed(url='https://www.repfitness.com/strength-equipment/power-racks', description=description_content, color=0x0000ff)
+						e.set_author(name='POWER/SQUAT RACKS + ADDONS', url='https://www.repfitness.com/strength-equipment/power-racks')
+						e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/r/e/rep_pr-5000_v2-loaded_3__13.jpg')
+						e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+						await message.channel.send(embed=e)
+						print('racks changed')
+
+					elif i == 4:
+						scrape_update_time = datetime.now()
+						in_stock, out_of_stock, links = scrape_category('plates')
+						description_content = create_message(in_stock, out_of_stock, links)
+						
+						e = discord.Embed(url='https://www.repfitness.com/bars-plates/olympic-plates', description=description_content, color=0x7b00ff)
+						e.set_author(name='OLYMPIC/IRON/FRACTIONAL PLATES', url='https://www.repfitness.com/bars-plates/olympic-plates')
+						e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/l/i/lightroom_retouch-2.jpg')
+						e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%m:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
+						await message.channel.send(embed=e)
+						print('plates changed')
+
+				i += 1
+
 client.run(TOKEN)
