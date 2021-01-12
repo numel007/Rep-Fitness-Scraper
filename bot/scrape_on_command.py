@@ -66,7 +66,7 @@ def scrape_category(target):
 	  links.append(item_link['href'])
 
 	  # Parse listing name, will be used as a key later
-	  item_name = ('**[' + item_link.string.strip() + f']** ')
+	  item_name = item_link.string.strip()
 
 	  # Parse price container
 	  prices = item.select('div.price-box.price-final_price')
@@ -77,20 +77,20 @@ def scrape_category(target):
 		  price_from = prices[0].select('p.price-from span.price')
 		  price_to = prices[0].select('p.price-to span.price')
 		  try:
-			  price = (f': {price_from[0].string} - {price_to[0].string} ')
+			  price = (f'{price_from[0].string} - {price_to[0].string} ')
 		  except IndexError:
 
 			  try:
 				  minimal_price = prices[0].select('p.minimal-price span.price')
-				  price = (': ' + minimal_price[0].string + ' ')
+				  price = minimal_price[0].string
 			  except IndexError:
 
 				  try:
 					  normal_price = prices[0].select('span.normal-price span.price')
-					  price = (': ' + normal_price[0].string + ' ')
+					  price = (normal_price[0].string)
 				  except IndexError:
 					  final_price = prices[0].select('span.price')
-					  price = (': ' + final_price[0].string + ' ')
+					  price = final_price[0].string
 
 	  except:
 		  price = (': No price listed')
@@ -143,7 +143,9 @@ def create_message(in_stock, out_of_stock, links):
 
 	# Concatenate items/prices/links for in stock items to message
 	for item, price in in_stock.items():
-		message += f' ✓ [{item}]({links[i]}) {price}\n'
+
+		# Hyperlink and bold item name, price in regular text
+		message += f' ✓ **[{item}:]({links[i]})** {price}\n'
 		i+=1
 
 	message += '\n\n:x:** OUT OF STOCK **\n\n'
