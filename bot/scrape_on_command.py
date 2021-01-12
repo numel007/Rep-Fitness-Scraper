@@ -143,7 +143,7 @@ def create_message(in_stock, out_of_stock, links):
 
 	# Concatenate items/prices/links for in stock items to message
 	for item, price in in_stock.items():
-		message += f' ✓ {item} {price} \n{links[i]}\n'
+		message += f' ✓ [{item}]({links[i]}) {price}\n'
 		i+=1
 
 	message += '\n\n:x:** OUT OF STOCK **\n\n'
