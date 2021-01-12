@@ -2,6 +2,14 @@
 
 A Discord bot that scrapes [Rep Fitness](https://www.repfitness.com/) pages on command
 
+|  $bars 	|  $plates 	|  $racks 	|  $benches 	|
+|---	|---	|---	|---	|
+|  ![](https://i.imgur.com/6oydWeL.png) 	|  ![](https://i.imgur.com/mAxwieO.png) 	|  ![](https://i.imgur.com/Wtp5C4C.png) 	| ![](https://i.imgur.com/NAfef9s.png)  	|
+
+# Invite Rep Stock Bot
+
+<img width="50%" src="https://media1.giphy.com/media/MS3XfhXoVYkZP702GO/giphy.gif"/>
+
 [Click to invite](https://discord.com/api/oauth2/authorize?client_id=796621856760922152&permissions=523328&scope=bot)
 
 # Commands
