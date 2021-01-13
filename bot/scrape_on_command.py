@@ -140,7 +140,7 @@ def scrape_all_categories():
 
 def create_message(in_stock, out_of_stock, links):
 	"""Builds message from scraped data"""
-	print('Assembling message.')
+	print('Assembling message')
 	message = ':white_check_mark: **IN STOCK**\n\n'
   
 	# Index indicator, used to iterate through links list
@@ -163,7 +163,7 @@ def create_message(in_stock, out_of_stock, links):
 	return message
 
 def create_racks_embed():
-	print('Assembling racks embed.')
+	print('Begin assembling racks embed')
 	scrape_update_time = datetime.utcnow()
 	# Scrape category and store returned dictionaries and links
 	in_stock, out_of_stock, links = scrape_category('racks')
@@ -180,7 +180,7 @@ def create_racks_embed():
 	return e
 
 def create_plates_embed():
-	print('Assembling plates embed.')
+	print('Begin assembling plates embed')
 	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('plates')
 	description_content = create_message(in_stock, out_of_stock, links)
@@ -192,7 +192,7 @@ def create_plates_embed():
 	return e
 
 def create_bars_embed():
-	print('Assembling barbells embed.')
+	print('Begin assembling barbells embed')
 	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('bars')
 	description_content = create_message(in_stock, out_of_stock, links)
@@ -204,7 +204,7 @@ def create_bars_embed():
 	return e
 
 def create_bells_embed():
-	print('Assembling dumbbells embed.')
+	print('Begin assembling dumbbells embed')
 	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('bells')
 	description_content = create_message(in_stock, out_of_stock, links)
@@ -216,7 +216,7 @@ def create_bells_embed():
 	return e
 
 def create_benches_embed():
-	print('Assembling benches embed.')
+	print('Begin assembling benches embed')
 	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('benches')
 	description_content = create_message(in_stock, out_of_stock, links)
@@ -273,6 +273,7 @@ async def on_message(message):
 		print('Sending racks embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
+		print('Ready for next command\n')
 
 	if message.content.startswith('$benches'):
 		print('Benches requested')
@@ -281,6 +282,7 @@ async def on_message(message):
 		print('Sending benches embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
+		print('Ready for next command\n')
 
 	if message.content.startswith('$bells'):
 		print('Dumbbells requested')
@@ -289,6 +291,7 @@ async def on_message(message):
 		print('Sending dumbbells embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
+		print('Ready for next command\n')
 
 	if message.content.startswith('$bars'):
 		print('Barbells requested')
@@ -297,6 +300,7 @@ async def on_message(message):
 		print('Sending barbells embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
+		print('Ready for next command\n')
 
 	if message.content.startswith('$plates'):
 		print('Plates requested')
@@ -305,5 +309,6 @@ async def on_message(message):
 		print('Sending plates embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
+		print('Ready for next command\n')
 
 client.run(TOKEN)
