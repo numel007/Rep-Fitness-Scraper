@@ -158,7 +158,7 @@ def create_message(in_stock, out_of_stock, links):
 	return message
 
 def create_racks_embed():
-	scrape_update_time = datetime.datetime.utcnow()
+	scrape_update_time = datetime.utcnow()
 	# Scrape category and store returned dictionaries and links
 	in_stock, out_of_stock, links = scrape_category('racks')
 
@@ -174,7 +174,7 @@ def create_racks_embed():
 	return e
 
 def create_plates_embed():
-	scrape_update_time = datetime.datetime.utcnow()
+	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('plates')
 	description_content = create_message(in_stock, out_of_stock, links)
 	
@@ -185,7 +185,7 @@ def create_plates_embed():
 	return e
 
 def create_bars_embed():
-	scrape_update_time = datetime.datetime.utcnow()
+	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('bars')
 	description_content = create_message(in_stock, out_of_stock, links)
 
@@ -196,7 +196,7 @@ def create_bars_embed():
 	return e
 
 def create_bells_embed():
-	scrape_update_time = datetime.datetime.utcnow()
+	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('bells')
 	description_content = create_message(in_stock, out_of_stock, links)
 
@@ -207,7 +207,7 @@ def create_bells_embed():
 	return e
 
 def create_benches_embed():
-	scrape_update_time = datetime.datetime.utcnow()
+	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('benches')
 	description_content = create_message(in_stock, out_of_stock, links)
 
