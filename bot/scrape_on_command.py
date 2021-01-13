@@ -32,17 +32,22 @@ def scrape_category(target):
 
   # Determine chosen category
   if target == 'benches':
+	  print('Retrieving benches')
 	  url_to_scrape = benchs_url
   elif target == 'racks':
+	  print('Retrieving racks')
 	  url_to_scrape = racks_url
   elif target == 'bells':
+	  print('Retrieving dumbbells')
 	  url_to_scrape = bells_url
   elif target == 'bars':
+	  print('Retrieving barbells')
 	  url_to_scrape = bars_url
   elif target == 'plates':
+	  print('Retrieving plates')
 	  url_to_scrape = plates_url
   else:
-	  print('No url found for this category.')
+	  print('No url found for specified category.')
 	  url_to_scrape = invalid_url
 
   # Initialize empty dictionaries
@@ -135,7 +140,7 @@ def scrape_all_categories():
 
 def create_message(in_stock, out_of_stock, links):
 	"""Builds message from scraped data"""
-
+	print('Assembling message.')
 	message = ':white_check_mark: **IN STOCK**\n\n'
   
 	# Index indicator, used to iterate through links list
@@ -158,6 +163,7 @@ def create_message(in_stock, out_of_stock, links):
 	return message
 
 def create_racks_embed():
+	print('Assembling racks embed.')
 	scrape_update_time = datetime.utcnow()
 	# Scrape category and store returned dictionaries and links
 	in_stock, out_of_stock, links = scrape_category('racks')
@@ -174,6 +180,7 @@ def create_racks_embed():
 	return e
 
 def create_plates_embed():
+	print('Assembling plates embed.')
 	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('plates')
 	description_content = create_message(in_stock, out_of_stock, links)
@@ -185,6 +192,7 @@ def create_plates_embed():
 	return e
 
 def create_bars_embed():
+	print('Assembling barbells embed.')
 	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('bars')
 	description_content = create_message(in_stock, out_of_stock, links)
@@ -196,6 +204,7 @@ def create_bars_embed():
 	return e
 
 def create_bells_embed():
+	print('Assembling dumbbells embed.')
 	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('bells')
 	description_content = create_message(in_stock, out_of_stock, links)
@@ -207,6 +216,7 @@ def create_bells_embed():
 	return e
 
 def create_benches_embed():
+	print('Assembling benches embed.')
 	scrape_update_time = datetime.utcnow()
 	in_stock, out_of_stock, links = scrape_category('benches')
 	description_content = create_message(in_stock, out_of_stock, links)
@@ -257,32 +267,42 @@ async def on_message(message):
 		await message.channel.send('You are {}.'.format(message.author.mention))
 
 	if message.content.startswith('$racks'):
+		print('Racks requested')
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='powercages/racks'))
 		e = create_racks_embed()
+		print('Sending racks embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
 
 	if message.content.startswith('$benches'):
+		print('Benches requested')
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='FID/flat benches'))
 		e = create_benches_embed()
+		print('Sending benches embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
 
 	if message.content.startswith('$bells'):
+		print('Dumbbells requested')
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='dumbbells'))
 		e = create_bells_embed()
+		print('Sending dumbbells embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
 
 	if message.content.startswith('$bars'):
+		print('Barbells requested')
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='olympic bars'))
 		e = create_bars_embed()
+		print('Sending barbells embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
 
 	if message.content.startswith('$plates'):
+		print('Plates requested')
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='bumper/iron plates'))
 		e = create_plates_embed()
+		print('Sending plates embed')
 		await message.channel.send(embed=e)
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
 
