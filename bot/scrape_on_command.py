@@ -266,6 +266,13 @@ async def on_message(message):
 	if message.content.startswith('$whoami'):
 		await message.channel.send('You are {}.'.format(message.author.mention))
 
+	if message.content.startswith('$serverlist'):
+
+		print('Connected servers:')
+		for guild in client.guilds:
+			print(guild.name)
+		print('\n')
+
 	if message.content.startswith('$racks'):
 		print('Racks requested')
 		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='powercages/racks'))
