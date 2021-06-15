@@ -272,6 +272,7 @@ async def on_message(message):
 		for guild in client.guilds:
 			print(guild.name)
 		print('\n')
+		await message.channel.send('Check logs')
 
 	if message.content.startswith('$racks'):
 		print('Racks requested')

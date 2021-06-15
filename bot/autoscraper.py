@@ -115,8 +115,14 @@ def scrape_category(target):
 
 def scrape_all_categories():
 
+	# _____TODO_____
+	# cats = ['benches', 'bells', 'bars', 'racks', 'plates']
+
+	# for category in cats:
+	# 	scrape_category(category)
+
 	#---------BENCHES---------
-	benches_in_stock, benches_out_of_stock, benches_links = scrape_category('benches')
+	benches_in_stock, benches_out_of_stock, benches_links = scrape_category(cats[i]])
 	benches_content = create_message(benches_in_stock, benches_out_of_stock, benches_links)
 
 	#---------BELLS---------
@@ -160,9 +166,8 @@ def create_message(in_stock, out_of_stock, links):
 	return message
 
 def create_racks_embed():
-
 	# Get current time to be used as posted scrape time
-	scrape_update_time = datetime.now()
+	scrape_update_time = datetime.datetime.utcnow()
 
 	# Scrape category and store returned dictionaries and links
 	in_stock, out_of_stock, links = scrape_category('racks')
