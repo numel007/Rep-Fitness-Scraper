@@ -1,322 +1,190 @@
 import discord
 import os
 import requests
-import json
-import random
-import re
 from bs4 import BeautifulSoup as bs
-import html5lib
 from datetime import datetime
-import time
 from dotenv import load_dotenv
-import schedule
-from multiprocessing import Process
-import sys
 
 client = discord.Client()
 load_dotenv()
-TOKEN = os.getenv('TOKEN')
 text_channel_list = []
 
+
 def scrape_category(target):
-  """Scrapes a Rep page depending on user choice"""
+    """Scrapes a Rep page depending on user choice"""
 
-  # Define links corresponding to categories
-  benchs_url = 'https://www.repfitness.com/strength-equipment/strength-training'
-  racks_url = 'https://www.repfitness.com/strength-equipment/power-racks?product_list_limit=12'
-  bells_url = 'https://www.repfitness.com/conditioning/strength-equipment/dumbbells'
-  bars_url = 'https://www.repfitness.com/bars-plates/olympic-bars'
-  plates_url = 'https://www.repfitness.com/bars-plates/olympic-plates'
-  invalid_url = 'https://www.repfitness.com/in-stock-items'
-  url_to_scrape = ''
+    # Determine chosen category
+    if target == "benches":
+        r = requests.get(os.getenv("BENCHES_URL"))
+    elif target == "racks":
+        r = requests.get(os.getenv("RACKS_URL"))
+    elif target == "bells":
+        r = requests.get(os.getenv("BELLS_URL"))
+    elif target == "bars":
+        r = requests.get(os.getenv("BARS_URL"))
+    elif target == "plates":
+        r = requests.get(os.getenv("PLATES_URL"))
 
-  # Determine chosen category
-  if target == 'benches':
-	  print('Retrieving benches')
-	  url_to_scrape = benchs_url
-  elif target == 'racks':
-	  print('Retrieving racks')
-	  url_to_scrape = racks_url
-  elif target == 'bells':
-	  print('Retrieving dumbbells')
-	  url_to_scrape = bells_url
-  elif target == 'bars':
-	  print('Retrieving barbells')
-	  url_to_scrape = bars_url
-  elif target == 'plates':
-	  print('Retrieving plates')
-	  url_to_scrape = plates_url
-  else:
-	  print('No url found for specified category.')
-	  url_to_scrape = invalid_url
+    # Initialize empty dictionaries
+    in_stock_items = {}
+    out_of_stock_items = []
+    links = []
 
-  # Initialize empty dictionaries
-  in_stock_items = {}
-  out_of_stock_items = {}
-  links = []
+    # Scrape chosen page and parse listings
+    page_content = bs(r.content, features="html5lib")
+    all_items = page_content.select("li.item.product.product-item")
 
-  # Scrape chosen page and parse listings
-  r = requests.get(url_to_scrape)
-  page_content = bs(r.content, features='html5lib')
-  all_items = page_content.select('li.item.product.product-item')
+    for item in all_items:
+        price = ""
 
+        # Parse <a> from all_items
+        item_link = item.find("a", attrs={"class": "product-item-link"})
 
-  for item in all_items:
-	  price = ''
+        # Parse listing link, append to links list
+        links.append(item_link["href"])
 
-	  # Parse <a> from all_items
-	  item_link = item.find('a', attrs={'class': 'product-item-link'})
+        # Parse listing name, will be used as a key later
+        item_name = item_link.string.strip()
 
-	  # Parse listing link, append to links list
-	  links.append(item_link['href'])
+        # Parse price container
+        prices = item.select("div.price-box.price-final_price")
 
-	  # Parse listing name, will be used as a key later
-	  item_name = item_link.string.strip()
+        # Rep doesn't know how to build a coherent website; these try/excepts detect which
+        # price container the site is using for the item
+        try:
+            price_from = prices[0].select("p.price-from span.price")
+            price_to = prices[0].select("p.price-to span.price")
+            try:
+                price = (f"{price_from[0].string} - {price_to[0].string} ")
+            except IndexError:
 
-	  # Parse price container
-	  prices = item.select('div.price-box.price-final_price')
+                try:
+                    minimal_price = prices[0].select(
+                        "p.minimal-price span.price")
+                    price = minimal_price[0].string
+                except IndexError:
 
-	  # Rep doesn't know how to build a coherent website; these try/excepts detect which
-	  # price container the site is using for the item
-	  try:
-		  price_from = prices[0].select('p.price-from span.price')
-		  price_to = prices[0].select('p.price-to span.price')
-		  try:
-			  price = (f'{price_from[0].string} - {price_to[0].string} ')
-		  except IndexError:
+                    try:
+                        normal_price = prices[0].select(
+                            "span.normal-price span.price")
+                        price = (normal_price[0].string)
+                    except IndexError:
+                        final_price = prices[0].select("span.price")
+                        price = final_price[0].string
 
-			  try:
-				  minimal_price = prices[0].select('p.minimal-price span.price')
-				  price = minimal_price[0].string
-			  except IndexError:
+        except:
+            price = (": No price listed")
 
-				  try:
-					  normal_price = prices[0].select('span.normal-price span.price')
-					  price = (normal_price[0].string)
-				  except IndexError:
-					  final_price = prices[0].select('span.price')
-					  price = final_price[0].string
+        # Parse in stock container
+        in_stock = item.select("div.actions-primary span")
 
-	  except:
-		  price = (': No price listed')
+        # Determine if string in stock container lists as in/out of stock
+        if in_stock[0].string == "Out of Stock":
 
-	  # Parse in stock container
-	  in_stock = item.select('div.actions-primary span')
+            # If out of stock, add item to OOS list
+            out_of_stock_items.append(item_name)
+        elif in_stock[0].string == "Add to Cart":
+            in_stock_items[item_name] = price
 
-	  # Determine if string in stock container lists as in/out of stock
-	  if in_stock[0].string == 'Out of Stock':
+    return in_stock_items, out_of_stock_items, links
 
-		  # If out of stock, add item to OOS dictionary using item_name as key and price as value
-		  out_of_stock_items[item_name] = price
-	  elif in_stock[0].string == 'Add to Cart':
-		  in_stock_items[item_name] = price
-
-  # Return in/out of stock dictionaries and links list
-  return in_stock_items, out_of_stock_items, links
-
-def scrape_all_categories():
-
-	#---------BENCHES---------
-	benches_in_stock, benches_out_of_stock, benches_links = scrape_category('benches')
-	benches_content = create_message(benches_in_stock, benches_out_of_stock, benches_links)
-
-	#---------BELLS---------
-	bells_in_stock, bells_out_of_stock, bells_links = scrape_category('bells')
-	bells_content = create_message(bells_in_stock, bells_out_of_stock, bells_links)
-
-	#---------BARS---------
-	bars_in_stock, bars_out_of_stock, bars_links = scrape_category('bars')
-	bars_content = create_message(bars_in_stock, bars_out_of_stock, bars_links)
-
-	#---------RACKS---------
-	racks_in_stock, racks_out_of_stock, racks_links = scrape_category('racks')
-	racks_content = create_message(racks_in_stock, racks_out_of_stock, racks_links)
-
-	#---------PLATES---------
-	plates_in_stock, plates_out_of_stock, plates_links = scrape_category('plates')
-	plates_content = create_message(plates_in_stock, plates_out_of_stock, plates_links)
-
-	return benches_content, bells_content, bars_content, racks_content, plates_content
 
 def create_message(in_stock, out_of_stock, links):
-	"""Builds message from scraped data"""
-	print('Assembling message')
-	message = ':white_check_mark: **IN STOCK**\n\n'
-  
-	# Index indicator, used to iterate through links list
-	i = 0
+    """Builds message from scraped data"""
+    message = ":white_check_mark: **IN STOCK**\n\n"
 
-	# Concatenate items/prices/links for in stock items to message
-	for item, price in in_stock.items():
+    i = 0
 
-		# Hyperlink and bold item name, price in regular text
-		message += f' ✓ **[{item}:]({links[i]})** {price}\n'
-		i+=1
+    # Concatenate items/prices/links for in stock items to message
+    for item, price in in_stock.items():
 
-	message += '\n\n:x:** OUT OF STOCK **\n\n'
+        # Hyperlink and bold item name, price in regular text
+        message += f" ✓ **[{item}:]({links[i]})** {price}\n"
+        i += 1
 
-	# Concatenate only item (no price/links) for OOS items to message
-	# This is to try to stay below Discord's 2000 char limit
-	for item, price in out_of_stock.items():
-		message += f' × {item}\n'
+    message += "\n\n:x:** OUT OF STOCK **\n\n"
 
-	return message
+    for item in out_of_stock:
+        message += f" × {item}\n"
 
-def create_racks_embed():
-	print('Begin assembling racks embed')
-	scrape_update_time = datetime.utcnow()
-	# Scrape category and store returned dictionaries and links
-	in_stock, out_of_stock, links = scrape_category('racks')
+    return message
 
-	# Pass dictionaries and links into message creation method, store returned message
-	description_content = create_message(in_stock, out_of_stock, links)
-	
-	# Create embed
-	e = discord.Embed(url='https://www.repfitness.com/strength-equipment/power-racks', description=description_content, color=0x0000ff)
-	e.set_author(name='POWER/SQUAT RACKS + ADDONS', url='https://www.repfitness.com/strength-equipment/power-racks')
-	e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/r/e/rep_pr-5000_v2-loaded_3__13.jpg')
-	e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%M:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
 
-	return e
+def create_embed(listing):
 
-def create_plates_embed():
-	print('Begin assembling plates embed')
-	scrape_update_time = datetime.utcnow()
-	in_stock, out_of_stock, links = scrape_category('plates')
-	description_content = create_message(in_stock, out_of_stock, links)
-	
-	e = discord.Embed(url='https://www.repfitness.com/bars-plates/olympic-plates', description=description_content, color=0x7b00ff)
-	e.set_author(name='OLYMPIC/IRON/FRACTIONAL PLATES', url='https://www.repfitness.com/bars-plates/olympic-plates')
-	e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/l/i/lightroom_retouch-2.jpg')
-	e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%M:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
-	return e
+    if listing == "racks":
+        in_stock, out_of_stock, links = scrape_category("racks")
+        e = discord.Embed(url="https://www.repfitness.com/strength-equipment/power-racks",
+                          description=create_message(in_stock, out_of_stock, links), color=0x0000ff)
+        e.set_author(name="POWER/SQUAT RACKS")
+        e.set_thumbnail(url=os.getenv("RACKS_THUMBNAIL"))
 
-def create_bars_embed():
-	print('Begin assembling barbells embed')
-	scrape_update_time = datetime.utcnow()
-	in_stock, out_of_stock, links = scrape_category('bars')
-	description_content = create_message(in_stock, out_of_stock, links)
+    elif listing == "benches":
+        in_stock, out_of_stock, links = scrape_category("benches")
+        e = discord.Embed(url="https://www.repfitness.com/strength-equipment/strength-training",
+                          description=create_message(in_stock, out_of_stock, links), color=0x00ff0d)
+        e.set_author(name="FID/FLAT BENCHES")
+        e.set_thumbnail(url=os.getenv("BENCHES_THUMBNAIL"))
 
-	e = discord.Embed(url='https://www.repfitness.com/bars-plates/olympic-bars', description=description_content, color=0x00ffff)
-	e.set_author(name='OLYMPIC/TECHNIQUE/EZ-CURL/TRAP/POWER BARS', url='https://www.repfitness.com/bars-plates/olympic-bars')
-	e.set_thumbnail(url='https://www.repfitness.com/media/catalog/tmp/category/Category_Headers-Barbells.jpg')
-	e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%M:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
-	return e
+    elif listing == "bells":
+        in_stock, out_of_stock, links = scrape_category("bells")
+        e = discord.Embed(url="https://www.repfitness.com/conditioning/strength-equipment/dumbbells",
+                          description=create_message(in_stock, out_of_stock, links), color=0xffff00)
+        e.set_author(name="DUMBBELLS + RACKS")
+        e.set_thumbnail(url=os.getenv("BELLS_THUMBNAIL"))
 
-def create_bells_embed():
-	print('Begin assembling dumbbells embed')
-	scrape_update_time = datetime.utcnow()
-	in_stock, out_of_stock, links = scrape_category('bells')
-	description_content = create_message(in_stock, out_of_stock, links)
+    elif listing == "bars":
+        in_stock, out_of_stock, links = scrape_category("bars")
+        e = discord.Embed(url="https://www.repfitness.com/bars-plates/olympic-bars",
+                          description=create_message(in_stock, out_of_stock, links), color=0x00ffff)
+        e.set_author(name="BARBELLS")
+        e.set_thumbnail(url=os.getenv("BARS_THUMBNAIL"))
 
-	e = discord.Embed(url='https://www.repfitness.com/conditioning/strength-equipment/dumbbells', description=description_content, color=0xffff00)
-	e.set_author(name='HEX/ADJUTABLE DUMBBELLS + RACKS', url='https://www.repfitness.com/conditioning/strength-equipment/dumbbells')
-	e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/b4987f3b5df5a1097465525c4602b5fb/t/h/thumbnail-60_1.jpg')
-	e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%M:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
-	return e
+    elif listing == "plates":
+        in_stock, out_of_stock, links = scrape_category("plates")
+        e = discord.Embed(url="https://www.repfitness.com/bars-plates/olympic-plates",
+                          description=create_message(in_stock, out_of_stock, links), color=0x7b00ff)
+        e.set_author(name="PLATES")
+        e.set_thumbnail(url=os.getenv("PLATES_THUMBNAIL"))
 
-def create_benches_embed():
-	print('Begin assembling benches embed')
-	scrape_update_time = datetime.utcnow()
-	in_stock, out_of_stock, links = scrape_category('benches')
-	description_content = create_message(in_stock, out_of_stock, links)
+    e.set_footer(
+        text=f'Checked {datetime.utcnow().strftime("%H:%M:%S")} UTC')
 
-	e = discord.Embed(url='https://www.repfitness.com/strength-equipment/strength-training', description=description_content, color=0x00ff0d)
-	e.set_author(name='FID/FLAT BENCHES + ADDONS', url='https://www.repfitness.com/strength-equipment/strength-training')
-	e.set_thumbnail(url='https://www.repfitness.com/media/catalog/product/cache/6031cf661625f6f6abd8f87ef140b802/w/i/wide-pad.jpg')
-	e.set_footer(text=f'Updated {scrape_update_time.strftime("%H:%M:%S")} UTC', icon_url='https://i.imgur.com/1sqNK27b.jpg')
-	return e
+    return e
+
 
 @client.event
 async def on_ready():
-	await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
-	print('SCRAPE ON COMMAND')
-	print('{0.user} now running\n'.format(client))
-	print('Connected Servers:')
-	print('-------------------')
-	for guild in client.guilds:
-		print(guild.name)
-	print('\n')
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="you UWU"))
+    print("{0.user} now running\n".format(client))
 
-	# Retrieve list of channels bot is running in
-	for guild in client.guilds:
-		for channel in guild.text_channels:
-			text_channel_list.append(channel)
 
 @client.event
 async def on_message(message):
 
-  	# Stops the bot from talking to itself
-	if message.author == client.user:
-		return
+    # Stops the bot from talking to itself
+    if message.author == client.user:
+        return
 
-  	# Respond to ping
-	if client.user.mentioned_in(message) and message.mention_everyone == False:
-		await message.channel.send(':eyes:')
+    if message.content.startswith("$help") or message.content.startswith("$commands"):
+        commands_list = "**$racks:** Track powerracks\n**$benches:** Track FID/Flat benches\n**$bells:** Track dumbbells\n**$bars:** Track barbells\n**$plates:** Track bumper/iron plates"
+        e = discord.Embed(url="https://github.com/numel007/Rep-Fitness-Scraper",
+                          description=commands_list, color=0xffffff)
+        await message.channel.send(embed=e)
 
-	if message.content.startswith('$help') or message.content.startswith('$commands'):
-		commands_list = "**$racks:** Track powerracks\n**$benches:** Track FID/Flat benches\n**$bells:** Track dumbbells\n**$bars:** Track barbells\n**$plates:** Track bumper/iron plates"
-		e = discord.Embed(url='https://github.com/numel007/Rep-Fitness-Scraper', description=commands_list, color=0xffffff)
-		e.set_author(name='Rep Fitness Tracker', url='https://www.repfitness.com/')
-		e.set_thumbnail(url='https://img.icons8.com/fluent/344/github.png')
-		e.set_footer(text='Updated 1/9/21', icon_url='https://i.imgur.com/1sqNK27b.jpg')
-		await message.channel.send(embed=e)
+    if message.content.startswith("$racks"):
+        await message.channel.send(embed=create_embed("racks"))
 
-  	# Testing pinging a user
-	if message.content.startswith('$whoami'):
-		await message.channel.send('You are {}.'.format(message.author.mention))
+    if message.content.startswith("$benches"):
+        await message.channel.send(embed=create_embed("benches"))
 
-	if message.content.startswith('$serverlist'):
+    if message.content.startswith("$bells"):
+        await message.channel.send(embed=create_embed("bells"))
 
-		print('Connected servers:')
-		for guild in client.guilds:
-			print(guild.name)
-		print('\n')
-		await message.channel.send('Check logs')
+    if message.content.startswith("$bars"):
+        await message.channel.send(embed=create_embed("bars"))
 
-	if message.content.startswith('$racks'):
-		print('Racks requested')
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='powercages/racks'))
-		e = create_racks_embed()
-		print('Sending racks embed')
-		await message.channel.send(embed=e)
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
-		print('Ready for next command\n')
+    if message.content.startswith("$plates"):
+        await message.channel.send(embed=create_embed("plates"))
 
-	if message.content.startswith('$benches'):
-		print('Benches requested')
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='FID/flat benches'))
-		e = create_benches_embed()
-		print('Sending benches embed')
-		await message.channel.send(embed=e)
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
-		print('Ready for next command\n')
-
-	if message.content.startswith('$bells'):
-		print('Dumbbells requested')
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='dumbbells'))
-		e = create_bells_embed()
-		print('Sending dumbbells embed')
-		await message.channel.send(embed=e)
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
-		print('Ready for next command\n')
-
-	if message.content.startswith('$bars'):
-		print('Barbells requested')
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='olympic bars'))
-		e = create_bars_embed()
-		print('Sending barbells embed')
-		await message.channel.send(embed=e)
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
-		print('Ready for next command\n')
-
-	if message.content.startswith('$plates'):
-		print('Plates requested')
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='bumper/iron plates'))
-		e = create_plates_embed()
-		print('Sending plates embed')
-		await message.channel.send(embed=e)
-		await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='you UWU'))
-		print('Ready for next command\n')
-
-client.run(TOKEN)
+client.run(os.getenv("TOKEN"))
